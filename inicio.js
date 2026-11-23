@@ -291,24 +291,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         const compGeral = contar(agendamentos, 'compareceu');
         const pctGeral = Math.min(100, Math.floor((compGeral / Math.max(1, metaGeral)) * 100));
 
-        const alertas = [];
         const marcasOrdenadas = Object.keys(porMarca).sort((a, b) => porMarca[b].total - porMarca[a].total);
-        marcasOrdenadas.forEach(m => {
-            const d = porMarca[m];
-            const meta = obterMeta(m);
-            const pct = Math.floor((d.comp / Math.max(1, meta)) * 100);
-            const pctPotencial = Math.floor(((d.comp + d.pend) / Math.max(1, meta)) * 100);
-            if (fracaoMes >= 0.5 && pct < 80) alertas.push({ tipo: 'alerta', texto: `${m} está em ${pct}% da meta (${d.comp}/${meta}) com o mês passando da metade.` });
-            if (fracaoMes >= 0.5 && pctPotencial < 80 && d.pend > 0) alertas.push({ tipo: 'perigo', texto: `${m}: mesmo se todos os pendentes comparecerem, chega a ${pctPotencial}% e não libera o bônus de equipe.` });
-        });
 
         const { count: totalDivAbertas } = await pDivAbertas;
         const mesesFechados = await pMesesFechados;
         const fechados = new Set((mesesFechados || []).map(m => m.mes));
-        const anteriorAberto = !fechados.has(mesAnterior);
 
-        if (totalDivAbertas) alertas.push({ tipo: 'alerta', texto: `${totalDivAbertas} divergência(s) aberta(s) aguardando resposta.`, href: 'divergencias.html' });
-        if (anteriorAberto) alertas.push({ tipo: 'alerta', texto: `O mês ${mesAnterior.split('-').reverse().join('/')} ainda não foi fechado.`, href: 'admin.html#fechamento' });
 
         const operadoresFech = (perfis || []).filter(p => p.role !== 'admin' && !p.inativo_desde);
         const fechamentos = await pFechamentosMes;
@@ -357,9 +345,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         };
         const quando = iso => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
-        const alertasHtml = alertas.length
-            ? `<div class="dash-alertas">${alertas.map(a => `<${a.href ? 'a href="' + a.href + '"' : 'div'} class="dash-alerta ${a.tipo}">${escaparHtml(a.texto)}</${a.href ? 'a' : 'div'}>`).join('')}</div>`
-            : '<div class="dash-alertas"><div class="dash-alerta ok">Nenhum alerta no momento.</div></div>';
 
         const faltamGeral = Math.max(0, metaGeral - compGeral);
         const diasRestantes = ultimoDia - hoje.getDate();
@@ -413,7 +398,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         raiz.innerHTML = `
             ${cabecalho('Visão geral da central')}
-            ${alertasHtml}
             <div class="dash-secao-titulo">Meta da central</div>
             <div class="dash-grade dash-largo">
                 ${cartaoCentral}
